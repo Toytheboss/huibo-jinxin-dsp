@@ -226,7 +226,7 @@
       overscroll-behavior: contain;
     }
     .slide-in {
-      max-width: 760px;
+      max-width: 1120px;
       margin: 0 auto;
       min-height: 100%;
       display: flex;
@@ -385,6 +385,26 @@
       font-size: 22px;
     }
     .kind { color: var(--secondary); }
+
+    .blocks { display: flex; flex-direction: column; gap: 22px; }
+    .block-title {
+      margin: 0 0 10px;
+      font-family: var(--mono);
+      font-size: 12px;
+      letter-spacing: 0.14em;
+      color: var(--signal);
+    }
+    .cards {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+      gap: 14px;
+      align-items: start;
+    }
+    .cards.pair { grid-template-columns: minmax(0, 2fr) minmax(0, 3fr); }
+    .cards .script { padding: 16px 18px; }
+    .cards h3 { font-size: 17px; }
+    .cards .quote { font-size: 15px; line-height: 1.7; }
+    .cards .reply { margin-top: 0; }
 
     .card { padding: 18px; }
     .card p { margin: 0; color: var(--secondary); }
@@ -564,6 +584,7 @@
       .pager { left: 0; }
       .slide { padding: 20px 52px 16px 20px; }
       .grade { grid-template-columns: 1fr; }
+      .cards.pair { grid-template-columns: 1fr; }
     }
     @media (max-width: 640px) {
       .search { width: min(220px, 48vw); }
@@ -588,7 +609,7 @@
 <body>
   <a class="skip" href="#stage">跳到正文</a>
   <header class="top">
-    <a class="brand" href="#outreach">
+    <a class="brand" href="#outreach-talk">
       <span class="mark" aria-hidden="true">
         <svg width="18" height="18" viewBox="0 0 18 18">
           <rect x="4" y="4" width="10" height="10" fill="none" stroke="#38bdf8" stroke-width="1.2"/>
@@ -612,8 +633,12 @@
   </header>
 
   <nav class="toc" aria-label="目录">
-    <a href="#outreach" data-jump="outreach"><b>01 拓客</b><small>你先开口</small></a>
-    <a href="#reply" data-jump="reply"><b>02 回询盘</b><small>客户先开口</small></a>
+    <p class="toc-label">我先开口</p>
+    <a href="#outreach-talk" data-jump="outreach-talk"><b>拓客话术</b><small>微信 / 电话 / 上门</small></a>
+    <a href="#outreach-mail" data-jump="outreach-mail"><b>拓客邮件</b><small>第一封 / 跟进</small></a>
+    <p class="toc-label">客户来问</p>
+    <a href="#reply-chat" data-jump="reply-chat"><b>回询盘 · 微信</b><small>首问 / 报价 / 技术</small></a>
+    <a href="#reply-mail" data-jump="reply-mail"><b>回询盘 · 邮件</b><small>正式回复</small></a>
     <p class="toc-label">按收件人</p>
     <a href="#role-buy" data-jump="role-buy"><b>采购</b><small>对比报价 · 不改板</small></a>
     <a href="#role-rd" data-jump="role-rd"><b>研发</b><small>CCS 照用 · 板上验证</small></a>
@@ -945,6 +970,7 @@
     const stage = document.getElementById("stage");
     const rail = document.getElementById("rail");
     let slides = [];
+    let copyPool = [];
     let index = 0;
     let locked = false;
     let wheelAcc = 0;
@@ -1029,69 +1055,80 @@
     function buildSlides() {
       const query = q.value.trim().toLowerCase();
       const out = [];
-      const addCards = (ch, idx, title, job, items, mail) => {
-        const list = items.filter((item) => matchItem(item, query));
-        list.forEach((item, i) => {
-          out.push({
-            ch, idx, title, job, mail, item,
-            n: i + 1,
-            total: list.length,
-            kind: "card",
-            copy: mail ? mailText(item) : item.body
-          });
-        });
+      const card = (item) => ({ item, mail: Boolean(item.subject) });
+      const cards = (list, heading) => ({ type: "cards", cards: list, heading });
+      const pick = (items, test) => items.filter(test).filter((item) => matchItem(item, query)).map(card);
+      const byTag = (items, tags) => pick(items, (x) => tags.includes(x.tag));
+      const byTitle = (items, titles) => pick(items, (x) => titles.includes(x.title));
+      const filled = (b) => b.type !== "cards" || b.cards.length > 0;
+      const section = (ch, title, pages) => {
+        const kept = pages
+          .map((p) => ({ ...p, blocks: p.blocks.filter(filled) }))
+          .filter((p) => p.blocks.length);
+        kept.forEach((p, i) => out.push({ ch, title, job: p.job, blocks: p.blocks, n: i + 1, total: kept.length }));
       };
-      addCards("outreach", "01", "拓客", "当面 / 微信 / 电话", ice, false);
-      addCards("outreach", "01", "拓客", "第一次邮件", outreachMails, true);
-      addCards("reply", "02", "回询盘", "微信", scripts, false);
-      addCards("reply", "02", "回询盘", "邮件", mails, true);
+
+      section("outreach-talk", "拓客话术", [
+        { job: "加微信 · 打电话", blocks: [cards(byTag(ice, ["微信"]), "微信"), cards(byTag(ice, ["电话"]), "电话")] },
+        { job: "展会 · 上门", blocks: [cards(byTag(ice, ["展会"]), "展会"), cards(byTag(ice, ["上门"]), "上门")] }
+      ]);
+      section("outreach-mail", "拓客邮件", [
+        { job: "第一封 · 不认识的客户", blocks: [cards(byTitle(outreachMails, ["还不清楚对方用什么", "已经知道对方用 TI", "打工控厂"]))] },
+        { job: "第一封 · 有由头", blocks: [cards(byTitle(outreachMails, ["有人介绍", "展会后补发", "打军工所"]))] },
+        { job: "跟进", blocks: [cards(byTag(outreachMails, ["跟进"]))] }
+      ]);
+      section("reply-chat", "回询盘 · 微信", [
+        { job: "客户第一句问", blocks: [cards(byTag(scripts, ["首问"]))] },
+        { job: "替代 · 证明", blocks: [cards(byTag(scripts, ["替代", "证明"]))] },
+        { job: "价格 · 交期", blocks: [cards(byTag(scripts, ["价格", "交期"]))] },
+        { job: "技术 · 样品", blocks: [cards(byTag(scripts, ["技术", "样品"]))] },
+        { job: "跟进 · 售后", blocks: [cards(byTag(scripts, ["跟进"]))] }
+      ]);
+      section("reply-mail", "回询盘 · 邮件", [
+        { job: "首次回复", blocks: [cards(byTag(mails, ["回复"]))] },
+        { job: "替代说明", blocks: [cards(byTag(mails, ["替代"]))] },
+        { job: "证明 · 报价 · 军品", blocks: [cards(byTag(mails, ["证明", "报价", "军品"]))] },
+        { job: "样品 · 跟进 · 售后", blocks: [cards(byTag(mails, ["样品", "跟进"]))] }
+      ]);
 
       segments.forEach((seg) => {
-        const hit = !query || `${seg.title} ${seg.job}`.toLowerCase().includes(query)
-          || matchItem(seg.chat, query) || matchItem(seg.mail, query);
-        if (!hit) return;
-        out.push({
-          ch: seg.id, idx: seg.idx, title: seg.title, job: "微信",
-          kind: "card", item: seg.chat, n: 1, total: 2, copy: seg.chat.body
-        });
-        out.push({
-          ch: seg.id, idx: seg.idx, title: seg.title, job: "邮件",
-          kind: "card", item: seg.mail, n: 2, total: 2, mail: true, copy: mailText(seg.mail)
-        });
+        const segHit = !query || `${seg.title} ${seg.job}`.toLowerCase().includes(query);
+        const list = [seg.chat, seg.mail].filter((x) => segHit || matchItem(x, query)).map(card);
+        section(seg.id, seg.title, [{ job: `${seg.job} · 微信 + 邮件`, blocks: [{ type: "cards", cards: list, pair: list.length === 2 }] }]);
       });
 
-      const ryList = ryPitch.filter((item) => matchItem(item, query) || (query && "荣颖 外围".includes(query)));
-      ryList.forEach((item, i) => {
-        const mail = Boolean(item.subject);
-        out.push({
-          ch: "ry-pitch", title: "荣颖话术", job: item.tag, kind: "card", item, mail,
-          n: i + 1, total: ryList.length, copy: mail ? mailText(item) : item.body
-        });
-      });
+      const ryHit = (x) => !query || "荣颖 外围".includes(query) || matchItem(x, query);
+      const ryPick = (idxs) => idxs.map((i) => ryPitch[i]).filter(ryHit).map(card);
+      section("ry-pitch", "荣颖话术", [
+        { job: "电机驱动 · 电平转换", blocks: [cards(ryPick([0, 1])), cards(ryPick([6]), "已在谈进芯 DSP 的客户")] },
+        { job: "运放 · LDO", blocks: [cards(ryPick([2, 3])), cards(ryPick([4, 5]))] }
+      ]);
 
       const rowHay = (rows) => rows.map((r) => r.join(" ")).join(" ").toLowerCase();
-      const ryPages = ryInfo.filter((p) => !query || `荣颖 ${p.job} ${rowHay(p.rows)}`.toLowerCase().includes(query));
-      ryPages.forEach((p, i) => {
-        out.push({ ch: "ry-info", title: "荣颖备查", job: p.job, kind: "rows", rows: p.rows, n: i + 1, total: ryPages.length, copy: "" });
-      });
+      const ryRows = (idxs) => idxs.map((i) => ryInfo[i])
+        .filter((g) => !query || `荣颖 ${g.job} ${rowHay(g.rows)}`.toLowerCase().includes(query))
+        .map((g) => ({ type: "rows", heading: g.job, rows: g.rows }));
+      section("ry-info", "荣颖备查", [
+        { job: "资质 · 产品", blocks: ryRows([0, 1]) },
+        { job: "等级 · 报备 · 核实", blocks: ryRows([2, 3, 4]) }
+      ]);
 
-      const prod = products.filter((p) => matchItem(p, query) || "对型号 2812 28335 28035".includes(query));
-      (query ? prod : products).forEach((p, i, arr) => {
-        out.push({
-          ch: "products", title: "对型号", job: "他对哪颗 TI",
-          kind: "product", item: p, n: i + 1, total: arr.length, copy: p.reply
-        });
-      });
+      const prod = products.filter((p) => !query || matchItem(p, query) || "对型号 2812 28335 28035".includes(query));
+      section("products", "对型号", [{ job: "他对哪颗 TI", blocks: prod.length ? [{ type: "products", items: prod }] : [] }]);
 
       const factHay = `卖点 出处 车规 功耗 供应链 华虹 长电 在供 分档 ${rowHay(proofRows)} ${rowHay(industries)} ${rowHay(grades)}`;
       if (!query || factHay.includes(query) || "备查 证明".includes(query)) {
-        out.push({ ch: "facts", title: "卖点证明", job: "卖点和出处", kind: "rows", rows: proofRows, n: 1, total: 4, copy: "" });
-        out.push({ ch: "facts", title: "卖点证明", job: "供应链", kind: "supply", n: 2, total: 4, copy: supplyLine });
-        out.push({ ch: "facts", title: "卖点证明", job: "在供", kind: "industries", n: 3, total: 4, copy: "" });
-        out.push({ ch: "facts", title: "卖点证明", job: "分档", kind: "grades", n: 4, total: 4, copy: "" });
+        section("facts", "卖点证明", [
+          { job: "卖点和出处", blocks: [{ type: "rows", rows: proofRows }] },
+          { job: "供应链 · 在供 · 分档", blocks: [
+            { type: "supply", heading: "供应链（可复制）" },
+            { type: "industries", heading: "在供客户（一次只说一家）" },
+            { type: "grades", heading: "军品分档" }
+          ] }
+        ]);
       }
       if (!query || "见面 上门 拜访".includes(query) || checks.some((c) => c.toLowerCase().includes(query))) {
-        out.push({ ch: "visit", title: "见面", job: "上门问这几句", kind: "visit", n: 1, total: 1, copy: "" });
+        section("visit", "见面", [{ job: "上门问这几句", blocks: [{ type: "visit" }] }]);
       }
 
       const order = new Map();
@@ -1102,8 +1139,9 @@
       return out;
     }
 
-    function cardHTML(s, query) {
-      const item = s.item;
+    function cardHTML(c, query, copies) {
+      const item = c.item;
+      const id = copies.push(c.mail ? mailText(item) : item.body) - 1;
       return `
         <article class="script plate">
           <span class="tag">${esc(item.tag)}</span>
@@ -1112,14 +1150,15 @@
               <h3>${highlight(item.title, query)}</h3>
               ${item.subject ? `<p class="subj">主题：${highlight(item.subject, query)}</p>` : ""}
             </div>
-            <button class="copy" type="button" data-copy>复制</button>
+            <button class="copy" type="button" data-copy="${id}">复制</button>
           </header>
-          <p class="quote">${highlight(item.body, query)}${s.mail ? `\n\n${esc(sign)}` : ""}</p>
+          <p class="quote">${highlight(item.body, query)}${c.mail ? `\n\n${esc(sign)}` : ""}</p>
           ${item.note ? `<p class="aside">// ${highlight(item.note, query)}</p>` : ""}
         </article>`;
     }
 
-    function productHTML(p, query) {
+    function productHTML(p, query, copies) {
+      const id = copies.push(p.reply) - 1;
       return `
         <article class="reply plate">
           <header>
@@ -1128,7 +1167,7 @@
               <h3 class="ours">${highlight(p.ours, query)}</h3>
               <p class="meta">${esc(p.kind)}</p>
             </div>
-            <button class="copy" type="button" data-copy>复制</button>
+            <button class="copy" type="button" data-copy="${id}">复制</button>
           </header>
           <p class="quote">${highlight(p.reply, query)}</p>
           <div class="pkg">${p.packages.map((x) => `<span>${esc(x)}</span>`).join("")}</div>
@@ -1158,6 +1197,31 @@
         </div>`;
     }
 
+    function blockHTML(b, query, copies) {
+      const head = b.heading ? `<p class="block-title">${esc(b.heading)}</p>` : "";
+      const pairs = (list, cls) => `<div class="${cls}">${list.map(([name, line]) => `
+            <button class="grade" type="button" data-copy="${copies.push(line) - 1}" data-quiet><b>${esc(name)}</b><span>${highlight(line, query)}</span></button>`).join("")}</div>`;
+      let body = "";
+      if (b.type === "cards") {
+        body = `<div class="cards${b.pair ? " pair" : ""}">${b.cards.map((c) => cardHTML(c, query, copies)).join("")}</div>`;
+      }
+      if (b.type === "products") body = `<div class="cards">${b.items.map((p) => productHTML(p, query, copies)).join("")}</div>`;
+      if (b.type === "rows") body = pairs(b.rows, "grades");
+      if (b.type === "grades") body = pairs(grades, "grades");
+      if (b.type === "industries") {
+        body = `<div class="industries">${industries.map(([name, line]) => `
+            <button type="button" data-copy="${copies.push(line) - 1}" data-quiet><b>${esc(name)}</b><small>${highlight(line, query)}</small></button>`).join("")}</div>`;
+      }
+      if (b.type === "supply") {
+        body = `<article class="card plate">
+            <div class="supply-head"><h3>代理 / 华虹 / 长电</h3><button class="copy" type="button" data-copy="${copies.push(supplyLine) - 1}">复制</button></div>
+            <p>${esc(supplyLine)}</p>
+          </article>`;
+      }
+      if (b.type === "visit") body = visitHTML();
+      return `<div class="block">${head}${body}</div>`;
+    }
+
     function renderTrack() {
       const query = q.value.trim();
       slides = buildSlides();
@@ -1167,38 +1231,16 @@
         paint();
         return;
       }
-      track.innerHTML = slides.map((s) => {
-        let body = "";
-        if (s.kind === "card") body = cardHTML(s, query);
-        if (s.kind === "product") body = productHTML(s.item, query);
-        if (s.kind === "supply") {
-          body = `<article class="card plate">
-            <div class="supply-head"><h3>代理 / 华虹 / 长电</h3><button class="copy" type="button" data-copy>复制</button></div>
-            <p>${esc(supplyLine)}</p>
-          </article>`;
-        }
-        if (s.kind === "industries") {
-          body = `<div class="industries">${industries.map(([name, line], i) => `
-            <button type="button" data-line="${i}"><b>${esc(name)}</b><small>${esc(line)}</small></button>`).join("")}</div>`;
-        }
-        if (s.kind === "grades") {
-          body = `<div class="grades">${grades.map(([name, line], i) => `
-            <button class="grade" type="button" data-grade="${i}"><b>${esc(name)}</b><span>${esc(line)}</span></button>`).join("")}</div>`;
-        }
-        if (s.kind === "rows") {
-          body = `<div class="grades">${s.rows.map(([name, line], i) => `
-            <button class="grade" type="button" data-row="${i}"><b>${esc(name)}</b><span>${highlight(line, query)}</span></button>`).join("")}</div>`;
-        }
-        if (s.kind === "visit") body = visitHTML();
-        return `<section class="slide" data-ch="${s.ch}">
+      const copies = [];
+      track.innerHTML = slides.map((s) => `<section class="slide" data-ch="${s.ch}">
           <div class="slide-in">
             <p class="idx">${s.idx} · ${pad(s.n)} / ${pad(s.total)}</p>
             <h2>${esc(s.title)}</h2>
             <p class="job">${esc(s.job)}</p>
-            ${body}
+            <div class="blocks">${s.blocks.map((b) => blockHTML(b, query, copies)).join("")}</div>
           </div>
-        </section>`;
-      }).join("");
+        </section>`).join("");
+      copyPool = copies;
       bindSlideExtras();
       if (index > slides.length - 1) index = 0;
       paint(true);
@@ -1207,23 +1249,9 @@
     function bindSlideExtras() {
       track.querySelectorAll("[data-copy]").forEach((btn) => {
         btn.addEventListener("click", () => {
-          const slide = btn.closest(".slide");
-          const i = [...track.children].indexOf(slide);
-          if (slides[i] && slides[i].copy) copyText(slides[i].copy, btn);
+          const text = copyPool[Number(btn.dataset.copy)];
+          if (text) copyText(text, btn.hasAttribute("data-quiet") ? null : btn);
         });
-      });
-      track.querySelectorAll("[data-line]").forEach((btn) => {
-        btn.addEventListener("click", () => copyText(industries[Number(btn.dataset.line)][1], null));
-      });
-      track.querySelectorAll("[data-row]").forEach((btn) => {
-        btn.addEventListener("click", () => {
-          const i = [...track.children].indexOf(btn.closest(".slide"));
-          const rows = slides[i] && slides[i].rows;
-          if (rows) copyText(rows[Number(btn.dataset.row)][1], null);
-        });
-      });
-      track.querySelectorAll("[data-grade]").forEach((btn) => {
-        btn.addEventListener("click", () => copyText(grades[Number(btn.dataset.grade)][1], null));
       });
       const list = track.querySelector("#checks");
       if (!list) return;
@@ -1391,7 +1419,9 @@
       if (event.target.id === "manual-copy") event.currentTarget.hidden = true;
     });
 
-    const hash = decodeURIComponent(location.hash.replace("#", ""));
+    const oldHash = { outreach: "outreach-talk", reply: "reply-chat" };
+    const rawHash = decodeURIComponent(location.hash.replace("#", ""));
+    const hash = oldHash[rawHash] || rawHash;
     renderTrack();
     const start = slides.findIndex((s) => s.ch === hash);
     if (start > 0) go(start);
