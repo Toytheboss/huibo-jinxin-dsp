@@ -151,18 +151,26 @@
       width: var(--toc-w);
       display: flex;
       flex-direction: column;
-      gap: 2px;
-      padding: 16px 10px;
+      gap: 1px;
+      padding: 10px 8px 12px;
+      overflow-y: auto;
       border-right: 1px solid var(--border);
       background: rgba(11, 11, 16, 0.55);
+    }
+    .toc-label {
+      margin: 10px 10px 4px;
+      font-family: var(--mono);
+      font-size: 10px;
+      letter-spacing: 0.18em;
+      color: var(--signal);
     }
     .toc a {
       display: flex;
       flex-direction: column;
       justify-content: center;
       gap: 2px;
-      min-height: 52px;
-      padding: 8px 12px;
+      min-height: 42px;
+      padding: 6px 10px;
       color: var(--muted);
       text-decoration: none;
       font-family: var(--mono);
@@ -546,7 +554,9 @@
         border-right: 0;
         border-top: 1px solid var(--border);
       }
-      .toc a { flex: none; min-height: 56px; }
+      .toc a, .toc-label { flex: none; }
+      .toc-label { margin: 0 8px; display: flex; align-items: center; white-space: nowrap; }
+      .toc a { min-height: 56px; }
       .stage {
         left: 0;
         bottom: calc(var(--pager-h) + 56px);
@@ -602,12 +612,19 @@
   </header>
 
   <nav class="toc" aria-label="目录">
-      <a href="#outreach" data-jump="outreach"><b>01 拓客</b><small>你先开口</small></a>
-      <a href="#reply" data-jump="reply"><b>02 回询盘</b><small>客户先开口</small></a>
-      <a href="#segments" data-jump="segments"><b>03 客群</b><small>他做什么</small></a>
-      <a href="#products" data-jump="products"><b>04 对型号</b><small>他对哪颗 TI</small></a>
-      <a href="#facts" data-jump="facts"><b>05 备查</b><small>证明 / 在供 / 分档</small></a>
-      <a href="#visit" data-jump="visit"><b>06 见面</b><small>上门问这几句</small></a>
+    <a href="#outreach" data-jump="outreach"><b>01 拓客</b><small>你先开口</small></a>
+    <a href="#reply" data-jump="reply"><b>02 回询盘</b><small>客户先开口</small></a>
+    <p class="toc-label">按客户</p>
+    <a href="#auto" data-jump="auto"><b>汽车</b><small>电驱 / OBC / 零部件</small></a>
+    <a href="#inverter" data-jump="inverter"><b>变频器</b><small>主控 28335 / 28035</small></a>
+    <a href="#motor" data-jump="motor"><b>电机伺服</b><small>28335 / 2812</small></a>
+    <a href="#power" data-jump="power"><b>电源</b><small>28035 / 28335</small></a>
+    <a href="#mil" data-jump="mil"><b>军工所</b><small>证明 / 军品 / 宽温</small></a>
+    <a href="#solver" data-jump="solver"><b>方案商</b><small>给整机做国产化</small></a>
+    <p class="toc-label">备查</p>
+    <a href="#products" data-jump="products"><b>对型号</b><small>28335 / 2812 / 28035</small></a>
+    <a href="#facts" data-jump="facts"><b>证明分档</b><small>华虹 / 长电 / 军品</small></a>
+    <a href="#visit" data-jump="visit"><b>见面</b><small>上门问这几句</small></a>
   </nav>
 
   <div class="stage" id="stage">
@@ -736,31 +753,37 @@
       { tag: "跟进", title: "客户反馈板上有问题", keys: "售后 故障", subject: "板上问题，今天拉厂家技术看", body: "你好。\n\n这事耽误你了。请按顺序回我三样：现象、从上电到报错做了什么、芯片丝印。\n\n我今天拉进芯技术进邮件，跟到你确认问题关掉。先别重画板。", note: "" }
     ];
 
-    const customers = [
-      ["变频器厂家", "主控多用 28335、28035。要国产、要交期、要降本。"],
-      ["电机 / 伺服厂家", "伺服、步进、运动控制。板上常见 28335。"],
-      ["电源厂家", "数字电源、模块电源。常见 28035、28335。"],
-      ["汽车 / 新能源", "整车和零部件。电驱、车载充电机、车载电源。量大，常用 28335。"],
-      ["军工所 / 总体所", "要国产化证明、军品或宽温。先问档次和型号。"],
-      ["方案商", "给整机厂做国产化方案。问下游用哪颗 TI。"]
-    ];
-
-    const segChat = [
-      { tag: "变频器", title: "变频器厂家来问", keys: "汇川 英威腾 工控", body: "变频器主控这块，进芯有国产芯片，能换 TI 的 28335、28035，板子不用改。你现在板上是哪一颗、多少脚？回我型号和大概用量，我发手册。", note: "别一上来点名汇川。对方问谁在用，再只说一家。" },
-      { tag: "电机", title: "电机 / 伺服厂家来问", keys: "伺服 步进 杰美康 三一", body: "伺服和电机这块，进芯换 TI 的 28335 有供货。你现在用的是 28335 还是 2812？回我型号，我发对应手册。程序要是还没跑过，DEMO 我一起安排。", note: "" },
-      { tag: "电源", title: "电源厂家来问", keys: "数字电源 模块电源 新雷能", body: "数字电源这块，进芯能换 TI 的 28035、28335。你原理图上是哪一颗、哪种封装？回我，我按那个发资料。", note: "28035 先对封装。" },
-      { tag: "汽车", title: "汽车厂 / 零部件来问", keys: "汽车 电驱 OBC 充电桩 比亚迪 整车 零部件", body: "汽车电驱和车载充电机这块，进芯有批量。你是做整车、电驱、OBC，还是零部件？主控现在是 TI 的 28335 吗？回我型号和大概年用量，我跟厂家对交期。", note: "客户名单别主动报。对方问谁在用，只说一家。" },
-      { tag: "军工", title: "所里来问", keys: "军品 证明 总体所", body: "进芯能出国产化证明。你现用是 TI 哪一颗？项目要军品、工业宽温，还是只要证明？这三句回我，我分开跟厂家报资料和交期。", note: "价格别先报。军品民品分开问。" },
-      { tag: "方案商", title: "方案商 / 系统厂来问", keys: "方案 集成 国产化", body: "你们给下游做国产化方案的话，现用 TI 是哪一颗？我按那颗发手册和移植说明。需要的话，进芯技术可以进群对着板子看。", note: "" }
-    ];
-
-    const segMail = [
-      { tag: "变频器", title: "变频器厂家", keys: "汇川 英威腾", subject: "变频器主控，换 TI 28335 / 28035", body: "你好，我是南京慧波通信的【姓名】，进芯 DSP 官方代理。\n\n变频器主控如果是 TI 的 28335、28035，进芯有对应国产芯片，板子不用改。\n\n你现在用哪一颗、多少脚、这批大概多少只，回我，手册今天发。", note: "不要写竞品客户名单。" },
-      { tag: "电机", title: "电机 / 伺服厂家", keys: "伺服 步进", subject: "伺服 DSP，换 TI 28335", body: "你好，我是南京慧波的【姓名】，进芯 DSP 官方代理。\n\n伺服、电机控制这块，进芯换 TI 的 28335、2812 有供货。板子不用改。\n\n你现在用哪一颗？回我型号，我发手册。程序还没跑过的话，DEMO 我一起发。", note: "" },
-      { tag: "电源", title: "电源厂家", keys: "数字电源 模块电源", subject: "数字电源 DSP，换 TI 28035 / 28335", body: "你好，我是南京慧波的【姓名】，进芯 DSP 官方代理。\n\n数字电源、模块电源如果主控是 TI 的 28035 或 28335，进芯有对应国产芯片。28035 封装有好几种，要先对脚。\n\n你原理图上是哪一颗、哪种封装，回我，我按那个发资料。", note: "" },
-      { tag: "汽车", title: "汽车整车 / 零部件", keys: "汽车 电驱 OBC 充电桩 整车 零部件", subject: "汽车电驱 / OBC 主控，换 TI 28335", body: "你好，我是南京慧波的【姓名】，进芯 DSP 官方代理。\n\n汽车电驱、车载充电机这块，进芯换 TI 的 28335 有批量。板子不用改。\n\n你是做整车、电驱、OBC，还是零部件？现在主控是哪一颗、一年大概多少只，回我，我跟厂家对交期和手册。", note: "不要把比亚迪、五菱写进邮件。" },
-      { tag: "军工", title: "军工所 / 总体所", keys: "军品 证明 所", subject: "进芯 DSP，可出国产化证明", body: "你好，我是南京慧波的【姓名】，进芯 DSP 官方代理。\n\n进芯能换 TI 的 28335、2812、28035，国产化证明可以出。军品和工业宽温不是一档，交期价格也不一样。\n\n你现用哪一颗、要军品还是工业级，回我这两句，我去跟厂家对资料。", note: "别报价，别写国标编号。" },
-      { tag: "方案商", title: "方案商 / 系统厂", keys: "方案 集成", subject: "给整机做国产化方案，先对 TI 型号", body: "你好，我是南京慧波的【姓名】，进芯 DSP 官方代理。\n\n你们要是在给整机厂做 DSP 国产化方案，进芯能换 TI 的 28335、2812、28035，板子不用改。移植说明现成，厂家技术可以对着板子看。\n\n下游现在用哪一颗，回我，我按那颗发手册。", note: "" }
+    const segments = [
+      {
+        id: "auto", idx: "03", title: "汽车", job: "电驱 / OBC / 零部件",
+        chat: { tag: "微信", title: "汽车厂来问", keys: "汽车 电驱 OBC 充电桩 比亚迪 整车 零部件", body: "汽车电驱和车载充电机这块，进芯有批量。你是做整车、电驱、OBC，还是零部件？主控现在是 TI 的 28335 吗？回我型号和大概年用量，我跟厂家对交期。", note: "客户名单别主动报。对方问谁在用，只说一家。" },
+        mail: { tag: "邮件", title: "发给汽车厂", keys: "汽车 电驱 OBC", subject: "汽车电驱 / OBC 主控，换 TI 28335", body: "你好，我是南京慧波的【姓名】，进芯 DSP 官方代理。\n\n汽车电驱、车载充电机这块，进芯换 TI 的 28335 有批量。板子不用改。\n\n你是做整车、电驱、OBC，还是零部件？现在主控是哪一颗、一年大概多少只，回我，我跟厂家对交期和手册。", note: "不要把比亚迪、五菱写进邮件。" }
+      },
+      {
+        id: "inverter", idx: "04", title: "变频器", job: "主控 28335 / 28035",
+        chat: { tag: "微信", title: "变频器厂家来问", keys: "汇川 英威腾 工控", body: "变频器主控这块，进芯有国产芯片，能换 TI 的 28335、28035，板子不用改。你现在板上是哪一颗、多少脚？回我型号和大概用量，我发手册。", note: "别一上来点名汇川。对方问谁在用，再只说一家。" },
+        mail: { tag: "邮件", title: "发给变频器厂家", keys: "汇川 英威腾", subject: "变频器主控，换 TI 28335 / 28035", body: "你好，我是南京慧波通信的【姓名】，进芯 DSP 官方代理。\n\n变频器主控如果是 TI 的 28335、28035，进芯有对应国产芯片，板子不用改。\n\n你现在用哪一颗、多少脚、这批大概多少只，回我，手册今天发。", note: "不要写竞品客户名单。" }
+      },
+      {
+        id: "motor", idx: "05", title: "电机伺服", job: "28335 / 2812",
+        chat: { tag: "微信", title: "电机 / 伺服厂家来问", keys: "伺服 步进 杰美康 三一", body: "伺服和电机这块，进芯换 TI 的 28335 有供货。你现在用的是 28335 还是 2812？回我型号，我发对应手册。程序要是还没跑过，DEMO 我一起安排。", note: "" },
+        mail: { tag: "邮件", title: "发给电机 / 伺服厂家", keys: "伺服 步进", subject: "伺服 DSP，换 TI 28335", body: "你好，我是南京慧波的【姓名】，进芯 DSP 官方代理。\n\n伺服、电机控制这块，进芯换 TI 的 28335、2812 有供货。板子不用改。\n\n你现在用哪一颗？回我型号，我发手册。程序还没跑过的话，DEMO 我一起发。", note: "" }
+      },
+      {
+        id: "power", idx: "06", title: "电源", job: "28035 / 28335",
+        chat: { tag: "微信", title: "电源厂家来问", keys: "数字电源 模块电源 新雷能", body: "数字电源这块，进芯能换 TI 的 28035、28335。你原理图上是哪一颗、哪种封装？回我，我按那个发资料。", note: "28035 先对封装。" },
+        mail: { tag: "邮件", title: "发给电源厂家", keys: "数字电源 模块电源", subject: "数字电源 DSP，换 TI 28035 / 28335", body: "你好，我是南京慧波的【姓名】，进芯 DSP 官方代理。\n\n数字电源、模块电源如果主控是 TI 的 28035 或 28335，进芯有对应国产芯片。28035 封装有好几种，要先对脚。\n\n你原理图上是哪一颗、哪种封装，回我，我按那个发资料。", note: "" }
+      },
+      {
+        id: "mil", idx: "07", title: "军工所", job: "证明 / 军品 / 宽温",
+        chat: { tag: "微信", title: "所里来问", keys: "军品 证明 总体所", body: "进芯能出国产化证明。你现用是 TI 哪一颗？项目要军品、工业宽温，还是只要证明？这三句回我，我分开跟厂家报资料和交期。", note: "价格别先报。军品民品分开问。" },
+        mail: { tag: "邮件", title: "发给军工所", keys: "军品 证明 所", subject: "进芯 DSP，可出国产化证明", body: "你好，我是南京慧波的【姓名】，进芯 DSP 官方代理。\n\n进芯能换 TI 的 28335、2812、28035，国产化证明可以出。军品和工业宽温不是一档，交期价格也不一样。\n\n你现用哪一颗、要军品还是工业级，回我这两句，我去跟厂家对资料。", note: "别报价，别写国标编号。" }
+      },
+      {
+        id: "solver", idx: "08", title: "方案商", job: "给整机做国产化",
+        chat: { tag: "微信", title: "方案商来问", keys: "方案 集成 国产化", body: "你们给下游做国产化方案的话，现用 TI 是哪一颗？我按那颗发手册和移植说明。需要的话，进芯技术可以进群对着板子看。", note: "" },
+        mail: { tag: "邮件", title: "发给方案商", keys: "方案 集成", subject: "给整机做国产化方案，先对 TI 型号", body: "你好，我是南京慧波的【姓名】，进芯 DSP 官方代理。\n\n你们要是在给整机厂做 DSP 国产化方案，进芯能换 TI 的 28335、2812、28035，板子不用改。移植说明现成，厂家技术可以对着板子看。\n\n下游现在用哪一颗，回我，我按那颗发手册。", note: "" }
+      }
     ];
 
     const industries = [
@@ -895,29 +918,36 @@
       addCards("reply", "02", "回询盘", "微信", scripts, false);
       addCards("reply", "02", "回询盘", "邮件", mails, true);
 
-      const custHay = `客群 ${customers.map((x) => x.join(" ")).join(" ")}`.toLowerCase();
-      if (!query || custHay.includes(query) || "客群 变频器 电机 电源 汽车 新能源 军工 方案".includes(query)) {
-        out.push({ ch: "segments", idx: "03", title: "客群", job: "主要找这几类", kind: "customers", n: 1, total: 1, copy: "" });
-      }
-      addCards("segments", "03", "客群", "微信", segChat, false);
-      addCards("segments", "03", "客群", "邮件", segMail, true);
+      segments.forEach((seg) => {
+        const hit = !query || `${seg.title} ${seg.job}`.toLowerCase().includes(query)
+          || matchItem(seg.chat, query) || matchItem(seg.mail, query);
+        if (!hit) return;
+        out.push({
+          ch: seg.id, idx: seg.idx, title: seg.title, job: "微信",
+          kind: "card", item: seg.chat, n: 1, total: 2, copy: seg.chat.body
+        });
+        out.push({
+          ch: seg.id, idx: seg.idx, title: seg.title, job: "邮件",
+          kind: "card", item: seg.mail, n: 2, total: 2, mail: true, copy: mailText(seg.mail)
+        });
+      });
 
       const prod = products.filter((p) => matchItem(p, query) || "对型号 2812 28335 28035".includes(query));
       (query ? prod : products).forEach((p, i, arr) => {
         out.push({
-          ch: "products", idx: "04", title: "对型号", job: "他对哪颗 TI",
+          ch: "products", idx: "09", title: "对型号", job: "他对哪颗 TI",
           kind: "product", item: p, n: i + 1, total: arr.length, copy: p.reply
         });
       });
 
       const factHay = `供应链 华虹 长电 在供 分档 ${industries.map((x) => x.join(" ")).join(" ")} ${grades.map((x) => x.join(" ")).join(" ")}`.toLowerCase();
       if (!query || factHay.includes(query) || "备查 证明".includes(query)) {
-        out.push({ ch: "facts", idx: "05", title: "备查", job: "供应链", kind: "supply", n: 1, total: 3, copy: supplyLine });
-        out.push({ ch: "facts", idx: "05", title: "备查", job: "在供", kind: "industries", n: 2, total: 3, copy: "" });
-        out.push({ ch: "facts", idx: "05", title: "备查", job: "分档", kind: "grades", n: 3, total: 3, copy: "" });
+        out.push({ ch: "facts", idx: "10", title: "证明分档", job: "供应链", kind: "supply", n: 1, total: 3, copy: supplyLine });
+        out.push({ ch: "facts", idx: "10", title: "证明分档", job: "在供", kind: "industries", n: 2, total: 3, copy: "" });
+        out.push({ ch: "facts", idx: "10", title: "证明分档", job: "分档", kind: "grades", n: 3, total: 3, copy: "" });
       }
       if (!query || "见面 上门 拜访".includes(query) || checks.some((c) => c.toLowerCase().includes(query))) {
-        out.push({ ch: "visit", idx: "06", title: "见面", job: "上门问这几句", kind: "visit", n: 1, total: 1, copy: "" });
+        out.push({ ch: "visit", idx: "11", title: "见面", job: "上门问这几句", kind: "visit", n: 1, total: 1, copy: "" });
       }
       return out;
     }
@@ -997,10 +1027,6 @@
             <p>我们是南京慧波通信，进芯科技官方认定代理。芯片进芯设计，流片华虹宏力，封测长电，筛选可走广州电子五所。国产化证明写得进这两家供应商代码，另有承诺书。进芯 2012 年成立，2016 年进工控，2019 年进军工。资料样品交期我们对接，厂家技术当天线上响应，现场 7 天内。</p>
           </article>`;
         }
-        if (s.kind === "customers") {
-          body = `<div class="industries">${customers.map(([name, line], i) => `
-            <button type="button" data-cust="${i}"><b>${esc(name)}</b><small>${esc(line)}</small></button>`).join("")}</div>`;
-        }
         if (s.kind === "industries") {
           body = `<div class="industries">${industries.map(([name, line], i) => `
             <button type="button" data-line="${i}"><b>${esc(name)}</b><small>${esc(line)}</small></button>`).join("")}</div>`;
@@ -1037,9 +1063,6 @@
       });
       track.querySelectorAll("[data-grade]").forEach((btn) => {
         btn.addEventListener("click", () => copyText(grades[Number(btn.dataset.grade)][1], null));
-      });
-      track.querySelectorAll("[data-cust]").forEach((btn) => {
-        btn.addEventListener("click", () => copyText(customers[Number(btn.dataset.cust)][1], null));
       });
       const list = track.querySelector("#checks");
       if (!list) return;
