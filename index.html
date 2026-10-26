@@ -1265,8 +1265,8 @@
       if (event.target.id === "manual-copy") event.currentTarget.hidden = true;
     });
 
+    const hash = decodeURIComponent(location.hash.replace("#", ""));
     renderTrack();
-    const hash = location.hash.replace("#", "");
     const start = slides.findIndex((s) => s.ch === hash);
     if (start > 0) go(start);
   </script>
