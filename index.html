@@ -1,0 +1,1174 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>慧波 · 进芯 DSP</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Exo:wght@500;600;700&family=Noto+Sans+SC:wght@400;500;700&family=Roboto+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #0b0b10;
+      --fg: #f8fafc;
+      --muted: #94a3b8;
+      --secondary: #cbd5e1;
+      --accent: #3b82f6;
+      --signal: #38bdf8;
+      --border: #1e293b;
+      --line: rgba(56, 189, 248, 0.45);
+      --header-h: 64px;
+      --pager-h: 56px;
+      --toc-w: 196px;
+      --sans: "Noto Sans SC", "PingFang SC", "Microsoft YaHei", sans-serif;
+      --display: "Exo", "Noto Sans SC", sans-serif;
+      --mono: "Roboto Mono", ui-monospace, monospace;
+      --ease: cubic-bezier(0.22, 1, 0.36, 1);
+    }
+    * { box-sizing: border-box; }
+    html, body { height: 100%; color-scheme: dark; }
+    html { background: var(--bg); }
+    body {
+      margin: 0;
+      overflow: hidden;
+      background: var(--bg);
+      color: var(--fg);
+      font-family: var(--sans);
+      font-size: 16px;
+      line-height: 1.65;
+    }
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      background:
+        radial-gradient(880px 380px at 8% -8%, rgba(59, 130, 246, 0.22), transparent 62%),
+        linear-gradient(rgba(56, 189, 248, 0.045) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(56, 189, 248, 0.045) 1px, transparent 1px);
+      background-size: auto, 48px 48px, 48px 48px;
+    }
+    button, input, textarea { font: inherit; color: inherit; }
+    button { cursor: pointer; }
+    :focus { outline: none; }
+    :focus-visible { outline: 2px solid var(--signal); outline-offset: 2px; }
+
+    .skip {
+      position: absolute;
+      left: 12px;
+      top: -48px;
+      background: var(--accent);
+      color: #020617;
+      padding: 8px 12px;
+      z-index: 40;
+      font-weight: 700;
+    }
+    .skip:focus { top: 12px; }
+
+    .top {
+      position: fixed;
+      inset: 0 0 auto 0;
+      z-index: 30;
+      display: flex;
+      align-items: center;
+      gap: 18px;
+      height: var(--header-h);
+      padding: 0 22px;
+      background: rgba(11, 11, 16, 0.9);
+      border-bottom: 1px solid var(--line);
+      backdrop-filter: blur(14px);
+    }
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      color: var(--fg);
+      text-decoration: none;
+    }
+    .mark {
+      width: 34px;
+      height: 34px;
+      flex: none;
+      border: 1px solid var(--signal);
+      display: grid;
+      place-items: center;
+      box-shadow: inset 0 0 12px rgba(56, 189, 248, 0.25);
+    }
+    .brand strong {
+      display: block;
+      font-family: var(--display);
+      font-weight: 700;
+      font-size: 18px;
+      letter-spacing: 0.08em;
+      line-height: 1.1;
+    }
+    .brand span {
+      display: block;
+      margin-top: 2px;
+      font-family: var(--mono);
+      font-size: 11px;
+      letter-spacing: 0.16em;
+      color: var(--signal);
+    }
+    .search {
+      margin-left: auto;
+      position: relative;
+      width: min(340px, 40vw);
+    }
+    .search svg {
+      position: absolute;
+      left: 12px;
+      top: 50%;
+      transform: translateY(-50%);
+      pointer-events: none;
+    }
+    .search input {
+      width: 100%;
+      height: 40px;
+      border: 1px solid var(--border);
+      background: #0e1016;
+      padding: 0 48px 0 38px;
+    }
+    .search input::placeholder { color: #64748b; }
+    .search kbd {
+      position: absolute;
+      right: 8px;
+      top: 50%;
+      transform: translateY(-50%);
+      border: 1px solid #334155;
+      padding: 0 6px;
+      color: var(--muted);
+      font-family: var(--mono);
+      font-size: 12px;
+    }
+
+    .toc {
+      position: fixed;
+      top: var(--header-h);
+      left: 0;
+      bottom: var(--pager-h);
+      z-index: 20;
+      width: var(--toc-w);
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      padding: 16px 10px;
+      border-right: 1px solid var(--border);
+      background: rgba(11, 11, 16, 0.55);
+    }
+    .toc a {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      gap: 2px;
+      min-height: 52px;
+      padding: 8px 12px;
+      color: var(--muted);
+      text-decoration: none;
+      font-family: var(--mono);
+      font-size: 13px;
+      letter-spacing: 0.04em;
+    }
+    .toc a b { font-weight: 500; }
+    .toc a small { font-size: 11px; letter-spacing: 0; opacity: 0.7; }
+    .toc a:hover { color: var(--fg); background: rgba(59, 130, 246, 0.08); }
+    .toc a[aria-current="true"] {
+      color: #020617;
+      background: var(--accent);
+    }
+
+    .stage {
+      position: fixed;
+      top: var(--header-h);
+      left: var(--toc-w);
+      right: 0;
+      bottom: var(--pager-h);
+      overflow: hidden;
+      z-index: 1;
+    }
+    .rail {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 2px;
+      background: #1e293b;
+      z-index: 4;
+    }
+    .rail i {
+      display: block;
+      height: 100%;
+      width: 0;
+      background: var(--signal);
+      transition: width 480ms var(--ease);
+    }
+    .track {
+      height: 100%;
+      will-change: transform;
+      transition: transform 520ms var(--ease);
+    }
+    html.reduce .track,
+    html.reduce .rail i,
+    html.reduce .slide-in { transition: none !important; animation: none !important; }
+
+    .slide {
+      height: 100%;
+      padding: 28px 64px 20px 36px;
+      overflow: auto;
+      overscroll-behavior: contain;
+    }
+    .slide-in {
+      max-width: 760px;
+      margin: 0 auto;
+      min-height: 100%;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      animation: rise 480ms var(--ease) both;
+    }
+    @keyframes rise {
+      from { opacity: 0; transform: translateY(32px); }
+      to { opacity: 1; transform: none; }
+    }
+
+    .idx {
+      margin: 0 0 4px;
+      font-family: var(--mono);
+      font-size: 12px;
+      letter-spacing: 0.18em;
+      color: var(--signal);
+    }
+    h2 {
+      margin: 0 0 6px;
+      font-family: var(--display);
+      font-size: 32px;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      line-height: 1.15;
+    }
+    .job {
+      margin: 0 0 18px;
+      color: var(--muted);
+      font-family: var(--mono);
+      font-size: 13px;
+    }
+    .block-title {
+      margin: 0 0 10px;
+      font-family: var(--mono);
+      font-size: 12px;
+      letter-spacing: 0.16em;
+      color: var(--signal);
+    }
+
+    .plate {
+      position: relative;
+      background: rgba(20, 22, 28, 0.92);
+      border: 1px solid var(--border);
+    }
+    .plate::before,
+    .plate::after {
+      content: "";
+      position: absolute;
+      width: 8px;
+      height: 8px;
+      pointer-events: none;
+    }
+    .plate::before {
+      top: -1px;
+      left: -1px;
+      border-top: 1px solid var(--signal);
+      border-left: 1px solid var(--signal);
+    }
+    .plate::after {
+      right: -1px;
+      bottom: -1px;
+      border-right: 1px solid var(--signal);
+      border-bottom: 1px solid var(--signal);
+    }
+
+    .script { padding: 18px 20px; }
+    .script header, .supply-head, .reply header {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 12px;
+    }
+    h3 { margin: 0; font-size: 20px; font-weight: 700; line-height: 1.4; }
+    .subj {
+      margin: 6px 0 0;
+      color: var(--signal);
+      font-family: var(--mono);
+      font-size: 12px;
+    }
+    .quote {
+      margin: 14px 0 0;
+      padding: 14px 16px;
+      background: #0c0e14;
+      border-left: 2px solid var(--accent);
+      white-space: pre-wrap;
+    }
+    .aside {
+      margin: 12px 0 0;
+      color: var(--muted);
+      font-family: var(--mono);
+      font-size: 12px;
+    }
+    .tag, .pkg span {
+      display: inline-flex;
+      align-items: center;
+      min-height: 22px;
+      padding: 0 8px;
+      border: 1px solid var(--border);
+      color: var(--signal);
+      font-family: var(--mono);
+      font-size: 11px;
+      letter-spacing: 0.06em;
+    }
+    .script .tag { margin-bottom: 8px; }
+    .pkg { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 12px; }
+    mark { background: rgba(59, 130, 246, 0.35); color: inherit; }
+
+    .copy, .ghost, .edge, .pager button, .industries button, .grade, .product {
+      border: 1px solid var(--border);
+      background: #101218;
+      transition: border-color 180ms ease, background 180ms ease, color 180ms ease;
+    }
+    .copy, .ghost {
+      flex: none;
+      min-height: 40px;
+      padding: 0 14px;
+      font-family: var(--mono);
+      font-size: 12px;
+      letter-spacing: 0.08em;
+    }
+    .copy:hover, .ghost:hover, .edge:hover, .pager button:hover,
+    .industries button:hover, .grade:hover, .product:hover {
+      border-color: var(--signal);
+    }
+    .copy.done {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: #020617;
+    }
+
+    .reply { margin-top: 12px; padding: 18px; }
+    .meta { margin: 6px 0 0; color: var(--muted); font-family: var(--mono); font-size: 12px; }
+    details { margin-top: 10px; color: var(--secondary); font-size: 14px; }
+    summary {
+      cursor: pointer;
+      min-height: 44px;
+      display: flex;
+      align-items: center;
+      font-family: var(--mono);
+      font-size: 12px;
+      letter-spacing: 0.08em;
+      color: var(--signal);
+    }
+    .ti {
+      font-family: var(--mono);
+      font-size: 12px;
+      color: var(--signal);
+    }
+    .ours {
+      display: block;
+      margin: 8px 0 6px;
+      font-family: var(--display);
+      font-weight: 700;
+      font-size: 22px;
+    }
+    .kind { color: var(--secondary); }
+
+    .card { padding: 18px; }
+    .card p { margin: 0; color: var(--secondary); }
+    .industries, .grades, .checks { display: flex; flex-direction: column; gap: 8px; }
+    .industries button, .grade {
+      text-align: left;
+      min-height: 44px;
+      padding: 12px 14px;
+      width: 100%;
+    }
+    .industries b, .grade b { display: block; font-family: var(--mono); font-size: 12px; letter-spacing: 0.08em; color: var(--signal); }
+    .industries small, .grade span { color: var(--secondary); }
+    .grade { display: grid; grid-template-columns: 112px minmax(0, 1fr); gap: 12px; align-items: center; }
+    .check {
+      display: flex;
+      gap: 12px;
+      align-items: flex-start;
+      padding: 12px 14px;
+      cursor: pointer;
+      border: 1px solid var(--border);
+      background: rgba(20, 22, 28, 0.92);
+    }
+    .check input { width: 16px; height: 16px; margin-top: 4px; accent-color: var(--accent); }
+    .check.done span { color: var(--muted); text-decoration: line-through; }
+    .visit-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+    .count { margin: 0; color: var(--muted); font-family: var(--mono); font-size: 12px; letter-spacing: 0.08em; }
+
+    .empty {
+      padding: 40px 16px;
+      text-align: center;
+      font-family: var(--mono);
+      color: var(--signal);
+    }
+
+    .edge {
+      position: absolute;
+      top: 50%;
+      z-index: 5;
+      width: 44px;
+      height: 44px;
+      transform: translateY(-50%);
+      color: var(--fg);
+    }
+    .edge[disabled] { opacity: 0.28; cursor: default; }
+    #prev { left: 12px; }
+    #next { right: 12px; }
+
+    .pager {
+      position: fixed;
+      left: var(--toc-w);
+      right: 0;
+      bottom: 0;
+      z-index: 20;
+      height: var(--pager-h);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 16px;
+      border-top: 1px solid var(--line);
+      background: rgba(11, 11, 16, 0.92);
+      backdrop-filter: blur(14px);
+    }
+    .pager button {
+      min-height: 36px;
+      padding: 0 14px;
+      font-family: var(--mono);
+      font-size: 12px;
+      letter-spacing: 0.08em;
+    }
+    .pager b {
+      font-family: var(--mono);
+      font-weight: 500;
+      letter-spacing: 0.12em;
+      min-width: 88px;
+      text-align: center;
+    }
+    .hint {
+      position: absolute;
+      left: 50%;
+      bottom: 18px;
+      transform: translateX(-50%);
+      z-index: 6;
+      font-family: var(--mono);
+      font-size: 12px;
+      letter-spacing: 0.14em;
+      color: var(--signal);
+      pointer-events: none;
+      opacity: 0;
+      animation: hint 2.8s var(--ease) 0.4s both;
+    }
+    @keyframes hint {
+      0% { opacity: 0; transform: translateX(-50%) translateY(8px); }
+      18% { opacity: 1; transform: translateX(-50%) translateY(0); }
+      75% { opacity: 1; }
+      100% { opacity: 0; }
+    }
+
+    .toast {
+      position: fixed;
+      left: 50%;
+      bottom: 72px;
+      transform: translateX(-50%) translateY(8px);
+      background: var(--accent);
+      color: #020617;
+      font-family: var(--mono);
+      font-size: 13px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      padding: 10px 16px;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 180ms ease, transform 180ms ease;
+      z-index: 50;
+    }
+    .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+    .manual {
+      position: fixed;
+      inset: 0;
+      z-index: 40;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      background: rgba(2, 6, 14, 0.72);
+    }
+    .manual[hidden] { display: none; }
+    .manual .panel {
+      width: min(520px, 100%);
+      background: #10141c;
+      border: 1px solid var(--line);
+      padding: 18px;
+    }
+    .manual h3 {
+      margin: 0 0 12px;
+      font-family: var(--mono);
+      letter-spacing: 0.14em;
+      color: var(--signal);
+    }
+    .manual textarea {
+      width: 100%;
+      min-height: 140px;
+      border: 1px solid var(--border);
+      background: #0b0d12;
+      padding: 12px;
+      resize: vertical;
+    }
+    .manual .ghost { margin-top: 12px; }
+
+    @media (max-width: 959px) {
+      .toc {
+        top: auto;
+        bottom: var(--pager-h);
+        left: 0;
+        right: 0;
+        width: auto;
+        height: 56px;
+        flex-direction: row;
+        overflow-x: auto;
+        padding: 0 8px;
+        border-right: 0;
+        border-top: 1px solid var(--border);
+      }
+      .toc a { flex: none; min-height: 56px; }
+      .stage {
+        left: 0;
+        bottom: calc(var(--pager-h) + 56px);
+      }
+      .pager { left: 0; }
+      .slide { padding: 20px 52px 16px 20px; }
+      .grade { grid-template-columns: 1fr; }
+    }
+    @media (max-width: 640px) {
+      .search { width: min(220px, 48vw); }
+      .search kbd { display: none; }
+      h2 { font-size: 26px; }
+      .script header, .supply-head, .reply header { flex-direction: column; }
+      .copy { width: 100%; }
+      .edge { display: none; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { animation: none !important; transition: none !important; }
+    }
+    @media print {
+      body { overflow: auto; background: #fff; color: #000; }
+      body::before, .top, .toc, .pager, .edge, .hint, .toast, .manual, .rail { display: none !important; }
+      .stage { position: static; }
+      .track { transform: none !important; height: auto; }
+      .slide { height: auto; overflow: visible; page-break-after: always; }
+    }
+  </style>
+</head>
+<body>
+  <a class="skip" href="#stage">跳到正文</a>
+  <header class="top">
+    <a class="brand" href="#outreach">
+      <span class="mark" aria-hidden="true">
+        <svg width="18" height="18" viewBox="0 0 18 18">
+          <rect x="4" y="4" width="10" height="10" fill="none" stroke="#38bdf8" stroke-width="1.2"/>
+          <path d="M4 7H1M4 11H1M14 7h3M14 11h3M7 4V1M11 4V1M7 14v3M11 14v3" stroke="#3b82f6" stroke-width="1.2"/>
+        </svg>
+      </span>
+      <div>
+        <strong>慧波</strong>
+        <span>进芯代理</span>
+      </div>
+    </a>
+    <form class="search" role="search" onsubmit="return false">
+      <label for="q" style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)">搜索</label>
+      <svg width="15" height="15" viewBox="0 0 16 16" aria-hidden="true">
+        <circle cx="7" cy="7" r="4.5" fill="none" stroke="#64748b" stroke-width="1.4"/>
+        <path d="M10.5 10.5L14 14" stroke="#64748b" stroke-width="1.4" stroke-linecap="square"/>
+      </svg>
+      <input id="q" type="search" placeholder="代理 / 28335 / 交期" autocomplete="off">
+      <kbd>/</kbd>
+    </form>
+  </header>
+
+  <nav class="toc" aria-label="目录">
+    <a href="#outreach" data-jump="outreach"><b>01 拓客</b><small>你先开口</small></a>
+    <a href="#reply" data-jump="reply"><b>02 回询盘</b><small>客户先开口</small></a>
+    <a href="#products" data-jump="products"><b>03 对型号</b><small>他对哪颗 TI</small></a>
+    <a href="#facts" data-jump="facts"><b>04 备查</b><small>证明 / 在供 / 分档</small></a>
+    <a href="#visit" data-jump="visit"><b>05 见面</b><small>上门问这几句</small></a>
+  </nav>
+
+  <div class="stage" id="stage">
+    <div class="rail" aria-hidden="true"><i id="rail"></i></div>
+    <div class="track" id="track"></div>
+    <button class="edge" id="prev" type="button" aria-label="上一页">↑</button>
+    <button class="edge" id="next" type="button" aria-label="下一页">↓</button>
+    <p class="hint">滚轮 · 下滑</p>
+  </div>
+
+  <div class="pager">
+    <button type="button" id="prev2">上一页</button>
+    <b id="pos">01 / 01</b>
+    <button type="button" id="next2">下一页</button>
+  </div>
+
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+  <div class="manual" id="manual-copy" hidden>
+    <div class="panel" role="dialog" aria-modal="true" aria-labelledby="manual-title">
+      <h3 id="manual-title">⌘C</h3>
+      <textarea id="manual-copy-text" readonly></textarea>
+      <button class="ghost" type="button" id="manual-close">关闭</button>
+    </div>
+  </div>
+
+  <script>
+    const products = [
+      {
+        id: "2812",
+        ti: "TMS320F2812",
+        ours: "ADP32F2812",
+        kind: "32 位定点",
+        packages: ["LQFP176", "BGA179", "CQFP176"],
+        point: "硬件原位。软件按移植说明改几处。",
+        reply: "2812 硬件原位，程序有几处按移植说明改。我把进芯的说明和手册发你，你先看时钟和 Flash。你们现在大概多少只，我跟厂家对交期。",
+        spec: "已量产。工业级 LQFP176、BGA179，军品 CQFP176 陶封。"
+      },
+      {
+        id: "335",
+        ti: "TMS320F28335",
+        ours: "ADP32F335 / JVP32F28335",
+        kind: "32 位浮点",
+        packages: ["LQFP176", "BGA176", "LQFP179", "CQFP176"],
+        point: "硬件原位。烧录换 Flash API，片内 Flash 是华虹 IP。",
+        reply: "28335 可以原位替，硬件按 F28335 来。软件侧主要是烧录：片内 Flash 要换成进芯的 API，CCS、C2Prog、UniFlash 都有替换说明，我发你。你是已有代码要切，还是新板？需要的话 DEMO 我跟厂家一起安排。",
+        spec: "LQFP-176，主频 150MHz，256K×16 Flash，34K×16 RAM。ePWM、eCAN、SCI、SPI、I2C、ADC。"
+      },
+      {
+        id: "035",
+        ti: "TMS320F28035",
+        ours: "ADP32F035 / JDP32F28035",
+        kind: "32 位定点控制器",
+        packages: ["QFP48", "QFP56", "QFP64", "QFP80", "QFN56"],
+        point: "原位兼容。先对封装。",
+        reply: "28035 按原位兼容来。封装有 48、56、64、80 脚，也有 QFN56。你原理图上是哪一种，我按那个发资料和 DEMO。",
+        spec: "军品还有 CQFP80、CQFP64。"
+      }
+    ];
+
+    const sign = "【姓名】\n南京慧波通信科技有限公司\n进芯科技官方认定代理\n【手机】";
+
+    const outreachMails = [
+      { tag: "第一次", title: "情况不明", keys: "拓客 开发 第一次 慧波 代理", subject: "进芯 DSP，对标 TI C2000", body: "你好，我是南京慧波通信的【姓名】。我们是进芯科技官方认定代理。\n\n进芯做对标 TI C2000 的 DSP。28335、2812、28035 硬件可以原位换。28335 烧录要换进芯的 Flash API，替换说明是现成的。\n\n你们板上如果有这几颗，或者新项目在选型，回我现在用的型号，我按那颗发手册。", note: "先报代理身份，三颗一起点名可以，别展开讲。" },
+      { tag: "第一次", title: "知道在用 TI", keys: "28335 2812 28035", subject: "F28335 国产原位替代", body: "你好，我是南京慧波通信的【姓名】，进芯科技官方认定代理。\n\n看到你们在用 TI 的 C2000。进芯的 28335、2812、28035 都能原位替，硬件不用改板。28335 软件上主要是换 Flash API，CCS、C2Prog、UniFlash 都有替换说明。\n\n你现在用的是哪一颗，封装多少脚，我把对应手册和说明发过去。", note: "型号确定后只发一颗。" },
+      { tag: "第一次", title: "熟人介绍", keys: "介绍 引荐", subject: "【介绍人】让我和你对接进芯 DSP", body: "你好，【介绍人】说你这边在看 DSP / 国产化。我是南京慧波通信的【姓名】，进芯科技官方认定代理。\n\n进芯对标 TI C2000，28335、2812、28035 硬件可以原位换。设计在进芯，流片华虹宏力，封测长电，证明可以出。\n\n你现在用的是哪一颗，我按那颗发手册和移植说明。", note: "把介绍人名字换上。" },
+      { tag: "第一次", title: "展会收了名片", keys: "展会 名片", subject: "展会上没说完，手册发你", body: "你好，昨天在【展会】碰到。我是南京慧波通信【姓名】，进芯科技官方认定代理。\n\n进芯对标 C2000，28335、2812、28035 硬件可原位。你方便的话回我现在用的型号，资料我按那个发，不一次丢三套。", note: "" },
+      { tag: "第一次", title: "军工所", keys: "军品 证明 五所", subject: "进芯 C2000 国产 DSP，可出证明", body: "你好，我是南京慧波通信的【姓名】，进芯科技官方认定代理。\n\n进芯对标 TI C2000。设计在进芯，流片华虹宏力，封测长电。国产化证明可以写这两家供应商代码，另有承诺书。塑封按 GJB 7400 N 级，陶封按 GJB 597B B 级，工业宽温也能做三温。\n\n你现用是哪一颗、要哪一档，我分开跟厂家报交期和资料。", note: "价格别写。" },
+      { tag: "第一次", title: "工控厂", keys: "变频器 电机 电源 电驱", subject: "工控 DSP，对标 28335 / 2812 / 28035", body: "你好，我是南京慧波通信的【姓名】，进芯科技官方认定代理。\n\n变频器、伺服、电源、电驱这块，进芯对标 C2000 的 DSP 有批量。硬件原位，28335 烧录换进芯的 API。\n\n你板上是 TI 哪一颗？回我型号和大概用量，手册我今天发。", note: "客户名单别写进这封。" },
+      { tag: "跟进", title: "发过没回", keys: "再发 未回", subject: "上次的手册，还差型号", body: "你好。\n\n上周发过进芯 C2000 替代资料。你方便的话回两件事：现在用哪一颗，大概用量。我对完再发移植说明。", note: "再没回就停。" },
+      { tag: "跟进", title: "邮件里要微信", keys: "微信 附件", subject: "手册我微信发", body: "你好。\n\n资料有点多，邮件不好传。这是我微信【微信号】，你加一下，我把对应型号的手册和 API 替换说明发过去。", note: "" },
+      { tag: "跟进", title: "约上门", keys: "拜访 上门", subject: "下周到你们那边一趟", body: "你好。\n\n资料发过了。你哪天方便，我带着移植说明上门，对一下现用型号和封装。时间你定。需要的话，厂家技术我一起约。", note: "别先约饭。" }
+    ];
+
+    const ice = [
+      { tag: "微信", title: "加微信", body: "你好，南京慧波【姓名】，进芯科技官方认定代理，DSP 对标 C2000。方便通过一下，我发手册。", note: "" },
+      { tag: "电话", title: "第一次打通", keys: "电话", body: "你好，我是南京慧波通信【姓名】，进芯科技官方认定代理。耽误你一分钟：你们板上现在是 28335、2812 还是 28035？", note: "" },
+      { tag: "展会", title: "展台", body: "我们是进芯官方代理。进芯这三颗对 TI：28335、2812、28035。你现在用哪颗？手册我发微信。", note: "" },
+      { tag: "展会", title: "展会后补一句", body: "昨天展会上碰过，南京慧波，进芯代理。你方便说一下现在用的型号，我按那颗发资料。", note: "" },
+      { tag: "上门", title: "所里第一次", keys: "部门 引荐", body: "南京慧波，进芯官方代理。第一次来，请问这是哪个部门？咱们还有哪个口在用 DSP，方便引荐一下吗？", note: "" },
+      { tag: "上门", title: "问国产化", keys: "老型号 降本", body: "老型号有没有国产化或降本的窗口？现用是 TI 哪一颗？", note: "" },
+      { tag: "上门", title: "问新研", keys: "选型 定点", body: "今年新研有没有定点还没锁的？DSP 选型定了没？", note: "" },
+      { tag: "微信", title: "递完名片", body: "这是我微信。南京慧波，进芯代理。你回我现在板上那颗 TI，我按那个发资料，不一次丢三颗。", note: "" },
+      { tag: "上门", title: "前台", body: "你好，南京慧波通信，找电子部 / 研发，对接 DSP 选型的老师。", note: "" },
+      { tag: "上门", title: "约下次", body: "你定个时间，我带移植说明过来。对一下型号就行。需要厂家技术，我一起约。", note: "别逼吃饭。" },
+      { tag: "微信", title: "对方敷衍", body: "那我先把进芯 28335 的替换说明发你。你看完哪页对不上，直接回我。", note: "" },
+      { tag: "电话", title: "说不缺货", body: "交期我可以跟厂家排。你要是有国产化或降本的项目，把现用型号发我，我先对封装。", note: "" }
+    ];
+
+    const scripts = [
+      { tag: "首问", title: "有国产 DSP 吗", body: "有的。我们是进芯科技官方认定代理，进芯对标 TI 的 C2000，2812、28335、28035 都能对上。你现在用的是哪一颗，还是新项目在选型？用量和要货时间大概什么时候，我按这个给你对型号。", note: "" },
+      { tag: "替代", title: "替 28335", keys: "335 28335 F28335", body: "28335 可以原位替，硬件按 F28335 来。软件侧主要是烧录：片内 Flash 要换成进芯的 API，CCS、C2Prog、UniFlash 都有替换说明，我发你。你是已有代码要切，还是新板？需要的话 DEMO 我跟厂家一起安排。", note: "别写 15 分钟。" },
+      { tag: "替代", title: "替 2812", keys: "2812 F2812", body: "2812 硬件原位，程序有几处按移植说明改。我把进芯的说明和手册发你，你先看时钟和 Flash。你们现在大概多少只，我跟厂家对交期。", note: "" },
+      { tag: "替代", title: "替 28035", keys: "035 28035 F28035", body: "28035 按原位兼容来。封装有 48、56、64、80 脚，也有 QFN56。你原理图上是哪一种，我按那个发资料和 DEMO。", note: "" },
+      { tag: "证明", title: "百分百国产", keys: "国产化 华虹 长电", body: "设计在进芯，流片华虹宏力，封测长电。国产化证明可以把这两家的供应商代码写进去，另外有承诺书。你项目要的是证明加承诺，还是还要五所的筛选报告？这两档交期和价格不一样，我分开跟厂家报。", note: "" },
+      { tag: "价格", title: "问价格", body: "价格按用量分档。你这批大概多少只，后面一年有没有量？民用、工业宽温还是军品？这三项你回我，我今天向厂家申请一版价格。", note: "数字等批完再发。" },
+      { tag: "价格", title: "成本压力大", body: "价格可以谈。你把目标价和年用量发我，我按阶梯去跟厂家申请，申请完把能做到的告诉你。", note: "" },
+      { tag: "交期", title: "问交期", keys: "货期 周", body: "你这个项目卡在哪个月？这几周就要首批的，正常 8 到 12 周，数量不大我先问厂家仓库能不能调。按项目排产、不急着这个月上车的，一般 12 到 16 周，科研和小批有滚动备货。你把数量发我，我让厂家计划对你的节点。", note: "数量没定，别说能赶上。" },
+      { tag: "技术", title: "答不上的技术问题", body: "这个我销售侧答不准。我去问进芯的技术，今天回你。你顺便说一下卡在烧录、ADC 还是通信，我让他看对地方。", note: "先看电源、复位、BOOT、API。" },
+      { tag: "技术", title: "28335 烧录", keys: "API CCS 降频", body: "28335 烧录报错的话，先确认 API 是不是进芯这份。A 版烧录主频要降到 45–60MHz，B0 降到 90MHz。你把丝印版本发我，我让厂家技术对一下。", note: "先问丝印。" },
+      { tag: "样品", title: "要样品", keys: "DEMO 开发板", body: "样品可以，我跟厂家申请。你发我收件信息、型号、封装和数量，另外是民品还是要筛选。程序如果还没跑过，我带移植说明和 DEMO。编译报错直接发我，拉厂家技术一起看。", note: "" },
+      { tag: "跟进", title: "资料发出第二天", body: "移植说明里 Flash API 那页，如果和你现在的 CCS 版本对不上，跟我说一下版本号。你们是硬件先确认封装，还是软件先看改动量？我按这个约厂家技术。", note: "" },
+      { tag: "跟进", title: "怕换了翻车", body: "硬件按原位做，要花时间的是烧录和软件，不是重新画板。你们要是有一块现成的 28335 板，可以先只换芯片和 API，跑你现在的工程。你这边更在意认证、交期，还是代码工作量？", note: "" },
+      { tag: "跟进", title: "几天没回", body: "上次的 28335 替代，API 和手册发你了。你方便的话回我两件事：封装是不是 176 脚，首批大概多少只。我让厂家计划先看货。", note: "再没回就停。" },
+      { tag: "首问", title: "你们是谁", keys: "介绍 进芯 慧波 代理", body: "我们是南京慧波通信，进芯科技官方认定代理。芯片是进芯做的，2012 年成立，2016 年进工控，2019 年进军工。设计在进芯，流片华虹宏力，封测长电。资料、样品、交期、价格我这边对接，技术问题我拉厂家。你现在板上是 TI 的哪一颗？", note: "别说成自己是进芯的人。" },
+      { tag: "首问", title: "和 TI、58 所比支持", keys: "58所 技术支持", body: "用 TI，出问题翻数据手册。用 58 所，还是翻 TI 的手册。用进芯的，厂家技术对着你的板子看。我们代理这边对接，线上当天回，要到现场按 7 天内。你现在卡在烧录、ADC 还是通信？", note: "一天调通别先说。" },
+      { tag: "首问", title: "有没有人在用", keys: "汇川 比亚迪 案例", body: "你做哪一块，电驱、变频器、电源还是电机？进芯在这些行业有批量，我按你的行业说一家。型号和用量你也发我，我对你这颗。", note: "一次只点一家。" },
+      { tag: "价格", title: "对方要我当场答应", keys: "权限 领导", body: "这个我权限不够，我回去跟厂家对一下，今天给你答复。你把用量和目标价留我。", note: "" },
+      { tag: "技术", title: "没碰到过的问题", body: "这个问题我没碰到过。你再说一遍现象，我记下来，问完进芯技术今天回你。", note: "" },
+      { tag: "跟进", title: "板上出问题了", keys: "售后 道歉", body: "这事耽误你了。你先说现象，从上电到报错的顺序。我拉厂家技术进群，跟到你这边确认关掉为止。", note: "" },
+      { tag: "跟进", title: "用了一阵再问", body: "芯片用下来有没有要配合的？上次说的那个项目，节点有没有往前？", note: "" }
+    ];
+
+    const mails = [
+      { tag: "回复", title: "只问有没有国产 DSP", subject: "进芯 DSP，对标 C2000", body: "你好，我是南京慧波通信的【姓名】，进芯科技官方认定代理。\n\n进芯对标 TI 的 C2000，2812、28335、28035 都能对上。你现在用的是哪一颗，还是新项目在选型？这批大概多少只、什么时候要货，我按这个对型号。\n\n手册可以今天发。", note: "" },
+      { tag: "替代", title: "点名 F28335", keys: "28335 335", subject: "F28335 原位替代", body: "你好。\n\n28335 可以原位替，硬件按 F28335 来。烧录要换成进芯的 Flash API，CCS、C2Prog、UniFlash 的替换说明我附在这封邮件里。\n\n你是现有代码要切，还是新板？没跑过的话，DEMO 我一起发。封装如果不是 176 脚，也说一下。", note: "别写 15 分钟。" },
+      { tag: "替代", title: "点名 F2812", keys: "2812", subject: "F2812 原位替代", body: "你好。\n\n2812 硬件原位，程序有几处按移植说明改，主要看时钟和 Flash。说明和手册见附件。你们现在大概多少只，我跟厂家对交期。", note: "" },
+      { tag: "替代", title: "点名 F28035", keys: "28035 035", subject: "F28035 替代，先对封装", body: "你好。\n\n28035 按原位兼容。封装有 48、56、64、80 脚，也有 QFN56。原理图上是哪一种，我按那个发资料和 DEMO。", note: "" },
+      { tag: "证明", title: "要国产化证明", keys: "国产 华虹 长电", subject: "国产化证明", body: "你好。\n\n设计在进芯，流片华虹宏力，封测长电。证明里可以写这两家的供应商代码，另有一份承诺书。\n\n你要的是证明加承诺，还是还要五所的筛选报告？两档的交期和价格不一样，我分开跟厂家报。", note: "" },
+      { tag: "报价", title: "问价格和交期", keys: "价格 交期 货期", subject: "价格和交期", body: "你好。\n\n价格按用量分档，用量没定我这边报不出数。这批多少只、后面一年大概多少、民用还是工业宽温或军品，这三项回我，我今天向厂家申请。\n\n交期看你卡在哪个月。这几周就要首批，正常 8 到 12 周，量不大我先问厂家仓库。按项目排产，一般 12 到 16 周。", note: "别先写数字。" },
+      { tag: "样品", title: "要样品", keys: "DEMO 样品", subject: "样品和 DEMO", body: "你好。\n\n样品可以，我跟厂家申请。请发收件信息、型号、封装、数量，以及民品还是要筛选。程序还没跑过的话，我带移植说明和 DEMO。编译报错直接回这封邮件，我拉厂家技术看。", note: "" },
+      { tag: "跟进", title: "资料发出后", keys: "CCS API", subject: "Flash API 和 CCS 版本", body: "你好。\n\n上次的 28335 资料里，移植说明 Flash API 那页如果和你现在的 CCS 对不上，把版本号回我。你们是先确认封装，还是先看程序改多少？我按这个约厂家技术。", note: "" },
+      { tag: "军品", title: "问军品或宽温", keys: "GJB 陶封 塑封 宽温", subject: "军品和工业宽温", body: "你好。\n\n军品和民品不是一档。塑封按 GJB 7400 N 级，陶封按 GJB 597B B 级，这两档可以出报告。自筛选按五所的项目做，报告由厂家出。工业宽温是工业级做三温，-55℃ 到 125℃。\n\n你要哪一档，再加上用量和节点，我分开向厂家申请价格和交期。", note: "" },
+      { tag: "跟进", title: "担心换芯片", keys: "28335 风险", subject: "现有板先换芯片试", body: "你好。\n\n硬件按原位做，时间在烧录和软件，不在重新画板。有现成的 28335 板的话，可以先只换芯片和 API，跑你现在的工程。你这边更在意认证、交期，还是代码改动量？", note: "" },
+      { tag: "回复", title: "问有没有人在用", keys: "案例 汇川 比亚迪", subject: "同行业供货情况", body: "你好。\n\n进芯在同行业有批量。你做电驱、变频器、电源还是电机？我按你的行业写一家，不把名单堆在邮件里。\n\n你这颗对标 TI 的哪一个型号，用量大概多少，我一起对。", note: "一次只写一家。" },
+      { tag: "回复", title: "拿 TI 或 58 所比支持", keys: "58所 技术支持", subject: "替换后的技术支持", body: "你好。\n\n用 TI，出问题看数据手册。用 58 所，多数还是对照 TI 的手册。用进芯的，厂家技术直接看你的板子和工程。我们代理这边对接，线上当天回。要到现场，按 7 天内安排。\n\n你现在是烧录、ADC 还是通信上有顾虑？说一下，我让厂家技术先看对地方。", note: "一天内调通先别写进邮件。" },
+      { tag: "跟进", title: "客户反馈板上有问题", keys: "售后 故障", subject: "板上问题，今天拉厂家技术看", body: "你好。\n\n这事耽误你了。请按顺序回我三样：现象、从上电到报错做了什么、芯片丝印。\n\n我今天拉进芯技术进邮件，跟到你确认问题关掉。先别重画板。", note: "" }
+    ];
+
+    const industries = [
+      ["新能源", "新能源电驱和 OBC，进芯在批量供，比亚迪、五菱、奇瑞、长安新能源这边都有量。"],
+      ["变频器", "变频器这块，进芯供过汇川、英威腾。"],
+      ["电源", "电源客户里北京新雷能在批量用进芯，四川升华、新兴东方也有。"],
+      ["电机", "电机这边进芯给杰美康、三一有供货。"]
+    ];
+    const grades = [
+      ["塑封军品", "塑封按 GJB 7400 N 级，五所或有资质的单位出报告。"],
+      ["陶封", "陶封按 GJB 597B B 级，出报告。"],
+      ["自筛选", "筛选项目按五所做，温循、老炼、三温都有，报告由厂家出，不走五所。"],
+      ["工业宽温", "工业级做三温，覆盖 -55℃ 到 125℃，适合所里要降本的项目。"]
+    ];
+    const checks = [
+      "现用的 TI 型号", "哪个部门在用 DSP", "新研有没有窗口", "老型号有没有国产化或降本",
+      "时间节点", "这批数量和一年的量", "民用、工业宽温还是军品", "谁签字", "更在意认证、交期，还是代码工作量"
+    ];
+    const supplyLine = "我们是南京慧波通信，进芯科技官方认定代理。设计在进芯，流片华虹宏力，封测长电。国产化证明可以把这两家的供应商代码写进去，另外有承诺书。你项目要的是证明加承诺，还是还要五所的筛选报告？这两档交期和价格不一样，我分开跟厂家报。";
+
+    const CHECK_KEY = "jinxin-dsp-visit-checks";
+    const reduced = window.matchMedia("(prefers-reduced-motion: reduce)");
+    if (reduced.matches) document.documentElement.classList.add("reduce");
+    reduced.addEventListener("change", () => {
+      document.documentElement.classList.toggle("reduce", reduced.matches);
+    });
+
+    const q = document.getElementById("q");
+    const toast = document.getElementById("toast");
+    const track = document.getElementById("track");
+    const stage = document.getElementById("stage");
+    const rail = document.getElementById("rail");
+    let slides = [];
+    let index = 0;
+    let locked = false;
+    let wheelAcc = 0;
+    let toastTimer = 0;
+    let touchY = 0;
+    let touchX = 0;
+    let touching = false;
+
+    function esc(s) {
+      return String(s).replace(/[&<>"']/g, (c) => ({
+        "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
+      }[c]));
+    }
+    function highlight(text, query) {
+      const safe = esc(text);
+      const needle = query.trim();
+      if (!needle) return safe;
+      const pattern = esc(needle).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+      return safe.replace(new RegExp(pattern, "gi"), (m) => `<mark>${m}</mark>`);
+    }
+    function hay(item) {
+      return `${item.tag || ""} ${item.title || ""} ${item.subject || ""} ${item.body || ""} ${item.note || ""} ${item.keys || ""} ${item.ti || ""} ${item.ours || ""} ${item.reply || ""}`.toLowerCase();
+    }
+    function pad(n) {
+      return String(n).padStart(2, "0");
+    }
+    function mailText(item) {
+      return `主题：${item.subject}\n\n${item.body}\n\n${sign}`;
+    }
+    function showToast(message) {
+      toast.textContent = message;
+      toast.classList.add("show");
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(() => toast.classList.remove("show"), 1600);
+    }
+    function copyText(text, button) {
+      const done = () => {
+        showToast("已复制");
+        if (!button) return;
+        const old = button.textContent;
+        button.textContent = "已复制";
+        button.classList.add("done");
+        setTimeout(() => {
+          button.textContent = old;
+          button.classList.remove("done");
+        }, 1400);
+      };
+      const manual = () => {
+        const layer = document.getElementById("manual-copy");
+        const area = document.getElementById("manual-copy-text");
+        area.value = text;
+        layer.hidden = false;
+        area.focus();
+        area.select();
+      };
+      const fallback = () => {
+        const area = document.createElement("textarea");
+        area.value = text;
+        area.setAttribute("readonly", "");
+        area.style.position = "fixed";
+        area.style.top = "0";
+        document.body.appendChild(area);
+        area.focus();
+        area.select();
+        let ok = false;
+        try { ok = document.execCommand("copy"); } catch (err) { ok = false; }
+        area.remove();
+        if (ok) done();
+        else manual();
+      };
+      if (navigator.clipboard && window.isSecureContext) {
+        navigator.clipboard.writeText(text).then(done).catch(fallback);
+      } else {
+        fallback();
+      }
+    }
+
+    function matchItem(item, query) {
+      return !query || hay(item).includes(query);
+    }
+
+    function buildSlides() {
+      const query = q.value.trim().toLowerCase();
+      const out = [];
+      const addCards = (ch, idx, title, job, items, mail) => {
+        const list = items.filter((item) => matchItem(item, query));
+        list.forEach((item, i) => {
+          out.push({
+            ch, idx, title, job, mail, item,
+            n: i + 1,
+            total: list.length,
+            kind: "card",
+            copy: mail ? mailText(item) : item.body
+          });
+        });
+      };
+      addCards("outreach", "01", "拓客", "第一次邮件", outreachMails, true);
+      addCards("outreach", "01", "拓客", "微信 / 电话", ice, false);
+      addCards("reply", "02", "回询盘", "微信", scripts, false);
+      addCards("reply", "02", "回询盘", "邮件", mails, true);
+
+      const prod = products.filter((p) => matchItem(p, query) || "对型号 2812 28335 28035".includes(query));
+      (query ? prod : products).forEach((p, i, arr) => {
+        out.push({
+          ch: "products", idx: "03", title: "对型号", job: "他对哪颗 TI",
+          kind: "product", item: p, n: i + 1, total: arr.length, copy: p.reply
+        });
+      });
+
+      const factHay = `供应链 华虹 长电 在供 分档 ${industries.map((x) => x.join(" ")).join(" ")} ${grades.map((x) => x.join(" ")).join(" ")}`.toLowerCase();
+      if (!query || factHay.includes(query) || "备查 证明".includes(query)) {
+        out.push({ ch: "facts", idx: "04", title: "备查", job: "供应链", kind: "supply", n: 1, total: 3, copy: supplyLine });
+        out.push({ ch: "facts", idx: "04", title: "备查", job: "在供", kind: "industries", n: 2, total: 3, copy: "" });
+        out.push({ ch: "facts", idx: "04", title: "备查", job: "分档", kind: "grades", n: 3, total: 3, copy: "" });
+      }
+      if (!query || "见面 上门 拜访".includes(query) || checks.some((c) => c.toLowerCase().includes(query))) {
+        out.push({ ch: "visit", idx: "05", title: "见面", job: "上门问这几句", kind: "visit", n: 1, total: 1, copy: "" });
+      }
+      return out;
+    }
+
+    function cardHTML(s, query) {
+      const item = s.item;
+      return `
+        <article class="script plate">
+          <span class="tag">${esc(item.tag)}</span>
+          <header>
+            <div>
+              <h3>${highlight(item.title, query)}</h3>
+              ${item.subject ? `<p class="subj">主题：${highlight(item.subject, query)}</p>` : ""}
+            </div>
+            <button class="copy" type="button" data-copy>复制</button>
+          </header>
+          <p class="quote">${highlight(item.body, query)}${s.mail ? `\n\n${esc(sign)}` : ""}</p>
+          ${item.note ? `<p class="aside">// ${highlight(item.note, query)}</p>` : ""}
+        </article>`;
+    }
+
+    function productHTML(p, query) {
+      return `
+        <article class="reply plate">
+          <header>
+            <div>
+              <span class="ti">${highlight(p.ti, query)}</span>
+              <h3 class="ours">${highlight(p.ours, query)}</h3>
+              <p class="meta">${esc(p.kind)}</p>
+            </div>
+            <button class="copy" type="button" data-copy>复制</button>
+          </header>
+          <p class="quote">${highlight(p.reply, query)}</p>
+          <div class="pkg">${p.packages.map((x) => `<span>${esc(x)}</span>`).join("")}</div>
+          <p class="aside">${esc(p.point)}</p>
+          <details>
+            <summary>参数</summary>
+            <p>${esc(p.spec)}</p>
+          </details>
+        </article>`;
+    }
+
+    function visitHTML() {
+      let saved = [];
+      try { saved = JSON.parse(localStorage.getItem(CHECK_KEY) || "[]"); } catch (err) { saved = []; }
+      const set = new Set(Array.isArray(saved) ? saved : []);
+      return `
+        <div class="visit-bar">
+          <p class="count" id="visit-count">${set.size} / ${checks.length}</p>
+          <button class="ghost" type="button" id="clear-checks">清空</button>
+        </div>
+        <div class="checks" id="checks">
+          ${checks.map((item, i) => `
+            <label class="check${set.has(i) ? " done" : ""}">
+              <input type="checkbox" data-i="${i}" ${set.has(i) ? "checked" : ""}>
+              <span>${esc(item)}</span>
+            </label>`).join("")}
+        </div>`;
+    }
+
+    function renderTrack() {
+      const query = q.value.trim();
+      slides = buildSlides();
+      if (!slides.length) {
+        track.innerHTML = `<section class="slide"><div class="slide-in"><div class="empty plate">无匹配</div></div></section>`;
+        index = 0;
+        paint();
+        return;
+      }
+      track.innerHTML = slides.map((s) => {
+        let body = "";
+        if (s.kind === "card") body = cardHTML(s, query);
+        if (s.kind === "product") body = productHTML(s.item, query);
+        if (s.kind === "supply") {
+          body = `<article class="card plate">
+            <div class="supply-head"><h3>代理 / 华虹 / 长电</h3><button class="copy" type="button" data-copy>复制</button></div>
+            <p>我们是南京慧波通信，进芯科技官方认定代理。芯片进芯设计，流片华虹宏力，封测长电，筛选可走广州电子五所。国产化证明写得进这两家供应商代码，另有承诺书。进芯 2012 年成立，2016 年进工控，2019 年进军工。资料样品交期我们对接，厂家技术当天线上响应，现场 7 天内。</p>
+          </article>`;
+        }
+        if (s.kind === "industries") {
+          body = `<div class="industries">${industries.map(([name, line], i) => `
+            <button type="button" data-line="${i}"><b>${esc(name)}</b><small>${esc(line)}</small></button>`).join("")}</div>`;
+        }
+        if (s.kind === "grades") {
+          body = `<div class="grades">${grades.map(([name, line], i) => `
+            <button class="grade" type="button" data-grade="${i}"><b>${esc(name)}</b><span>${esc(line)}</span></button>`).join("")}</div>`;
+        }
+        if (s.kind === "visit") body = visitHTML();
+        return `<section class="slide" data-ch="${s.ch}">
+          <div class="slide-in">
+            <p class="idx">${s.idx} · ${pad(s.n)} / ${pad(s.total)}</p>
+            <h2>${esc(s.title)}</h2>
+            <p class="job">${esc(s.job)}</p>
+            ${body}
+          </div>
+        </section>`;
+      }).join("");
+      bindSlideExtras();
+      if (index > slides.length - 1) index = 0;
+      paint(true);
+    }
+
+    function bindSlideExtras() {
+      track.querySelectorAll("[data-copy]").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          const slide = btn.closest(".slide");
+          const i = [...track.children].indexOf(slide);
+          if (slides[i] && slides[i].copy) copyText(slides[i].copy, btn);
+        });
+      });
+      track.querySelectorAll("[data-line]").forEach((btn) => {
+        btn.addEventListener("click", () => copyText(industries[Number(btn.dataset.line)][1], null));
+      });
+      track.querySelectorAll("[data-grade]").forEach((btn) => {
+        btn.addEventListener("click", () => copyText(grades[Number(btn.dataset.grade)][1], null));
+      });
+      const list = track.querySelector("#checks");
+      if (!list) return;
+      const updateCount = () => {
+        const n = list.querySelectorAll("input:checked").length;
+        const el = document.getElementById("visit-count");
+        if (el) el.textContent = `${n} / ${checks.length}`;
+      };
+      list.querySelectorAll("input").forEach((input) => {
+        input.addEventListener("change", () => {
+          input.closest(".check").classList.toggle("done", input.checked);
+          const next = [];
+          list.querySelectorAll("input").forEach((box) => {
+            if (box.checked) next.push(Number(box.dataset.i));
+          });
+          localStorage.setItem(CHECK_KEY, JSON.stringify(next));
+          updateCount();
+        });
+      });
+      const clear = track.querySelector("#clear-checks");
+      if (clear) {
+        clear.addEventListener("click", () => {
+          localStorage.removeItem(CHECK_KEY);
+          renderTrack();
+        });
+      }
+    }
+
+    function paint(resetEnter) {
+      const n = Math.max(slides.length, 1);
+      track.style.transform = `translate3d(0, ${-index * 100}%, 0)`;
+      rail.style.width = `${((index + 1) / n) * 100}%`;
+      document.getElementById("pos").textContent = `${pad(index + 1)} / ${pad(n)}`;
+      const atStart = index <= 0;
+      const atEnd = index >= n - 1;
+      ["prev", "prev2"].forEach((id) => { document.getElementById(id).disabled = atStart; });
+      ["next", "next2"].forEach((id) => { document.getElementById(id).disabled = atEnd; });
+      const ch = slides[index] ? slides[index].ch : "";
+      document.querySelectorAll(".toc a").forEach((a) => {
+        if (a.dataset.jump === ch) a.setAttribute("aria-current", "true");
+        else a.removeAttribute("aria-current");
+      });
+      if (ch) history.replaceState(null, "", `#${ch}`);
+      if (resetEnter) {
+        const node = track.children[index];
+        if (!node) return;
+        const inner = node.querySelector(".slide-in");
+        if (!inner || reduced.matches) return;
+        inner.style.animation = "none";
+        void inner.offsetWidth;
+        inner.style.animation = "";
+      }
+    }
+
+    function go(to) {
+      if (!slides.length) return;
+      const next = Math.max(0, Math.min(slides.length - 1, to));
+      if (next === index || locked) return;
+      locked = true;
+      index = next;
+      const node = track.children[index];
+      if (node) node.scrollTop = 0;
+      paint(true);
+      const wait = reduced.matches ? 0 : 520;
+      setTimeout(() => { locked = false; }, wait);
+    }
+    function step(dir) { go(index + dir); }
+
+    function currentSlideEl() {
+      return track.children[index];
+    }
+    function atEdge(dir) {
+      const el = currentSlideEl();
+      if (!el) return true;
+      if (dir > 0) return el.scrollTop + el.clientHeight >= el.scrollHeight - 2;
+      return el.scrollTop <= 2;
+    }
+
+    document.getElementById("prev").addEventListener("click", () => step(-1));
+    document.getElementById("next").addEventListener("click", () => step(1));
+    document.getElementById("prev2").addEventListener("click", () => step(-1));
+    document.getElementById("next2").addEventListener("click", () => step(1));
+
+    document.querySelectorAll(".toc a").forEach((a) => {
+      a.addEventListener("click", (event) => {
+        event.preventDefault();
+        const i = slides.findIndex((s) => s.ch === a.dataset.jump);
+        if (i >= 0) go(i);
+      });
+    });
+
+    stage.addEventListener("wheel", (event) => {
+      if (Math.abs(event.deltaY) < Math.abs(event.deltaX)) return;
+      const dir = event.deltaY > 0 ? 1 : -1;
+      if (!atEdge(dir)) return;
+      event.preventDefault();
+      wheelAcc += event.deltaY;
+      if (Math.abs(wheelAcc) < 70) return;
+      step(dir);
+      wheelAcc = 0;
+    }, { passive: false });
+
+    stage.addEventListener("pointerdown", (event) => {
+      if (event.target.closest("button, a, input, textarea, label, details")) return;
+      touching = true;
+      touchY = event.clientY;
+      touchX = event.clientX;
+    });
+    stage.addEventListener("pointerup", (event) => {
+      if (!touching) return;
+      touching = false;
+      const dy = event.clientY - touchY;
+      const dx = event.clientX - touchX;
+      if (Math.abs(dy) < 48 && Math.abs(dx) < 48) return;
+      if (Math.abs(dy) >= Math.abs(dx)) {
+        const dir = dy < 0 ? 1 : -1;
+        if (atEdge(dir)) step(dir);
+      } else {
+        step(dx < 0 ? 1 : -1);
+      }
+    });
+    stage.addEventListener("pointercancel", () => { touching = false; });
+
+    document.addEventListener("keydown", (event) => {
+      const manualOpen = !document.getElementById("manual-copy").hidden;
+      if (event.key === "Escape" && manualOpen) {
+        document.getElementById("manual-copy").hidden = true;
+        return;
+      }
+      const typing = ["INPUT", "TEXTAREA"].includes(document.activeElement.tagName);
+      if (event.key === "/" && !typing) {
+        event.preventDefault();
+        q.focus();
+        q.select();
+        return;
+      }
+      if (event.key === "Escape" && document.activeElement === q) {
+        q.value = "";
+        index = 0;
+        renderTrack();
+        q.blur();
+        return;
+      }
+      if (typing || manualOpen) return;
+      if (["ArrowDown", "PageDown", "j", " "].includes(event.key)) {
+        event.preventDefault();
+        step(1);
+      }
+      if (["ArrowUp", "PageUp", "k"].includes(event.key)) {
+        event.preventDefault();
+        step(-1);
+      }
+      if (event.key === "Home") { event.preventDefault(); go(0); }
+      if (event.key === "End") { event.preventDefault(); go(slides.length - 1); }
+    });
+
+    q.addEventListener("input", () => {
+      index = 0;
+      renderTrack();
+    });
+    document.getElementById("manual-close").addEventListener("click", () => {
+      document.getElementById("manual-copy").hidden = true;
+    });
+    document.getElementById("manual-copy").addEventListener("click", (event) => {
+      if (event.target.id === "manual-copy") event.currentTarget.hidden = true;
+    });
+
+    renderTrack();
+    const hash = location.hash.replace("#", "");
+    const start = slides.findIndex((s) => s.ch === hash);
+    if (start > 0) go(start);
+  </script>
+</body>
+</html>
